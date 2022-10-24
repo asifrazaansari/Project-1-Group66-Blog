@@ -30,12 +30,12 @@ const arrayOfStringChecking = function (data) {
 
 const createBlogs = async function (req, res) {
     try {
-        let bodyData = req.body
-        if (Object.keys(bodyData).length === 0) {
+        const data = req.body
+        if (Object.keys(data).length === 0) {
             return res.status(400).send({ status: false, msg: "Please enter details for creating a blog" })
         }
         else {
-            const { title, authorId, body, subcategory, category, tags } = bodyData
+            const { title, authorId, body, subcategory, category, tags } = data
 
             if (!isValidObjectId(authorId)) return res.status(400).send({ status: false, msg: `Author Id: ${authorId} is not valid, please enter valid authorId` })
 
@@ -53,13 +53,13 @@ const createBlogs = async function (req, res) {
             }
 
             let checkauthorId = await authorModel.findById(authorId)
-            if (checkauthorId.length === null) {
+            if (!checkauthorId) {
                 return res.status(404).send({ status: false, data: "Author ID not Found.....please Enter valid Author ID" })
             }
             else {
                 let userLoggedIn = (req.decodedToken.authorId).toString()
-                if (bodyData.authorId === userLoggedIn) {
-                    let createData = await blogModel.create(bodyData)
+                if (data.authorId === userLoggedIn) {
+                    let createData = await blogModel.create(data)
                     return res.status(201).send({ status: true, data: createData })
                 }
                 else {
@@ -75,9 +75,9 @@ const createBlogs = async function (req, res) {
 
 const getBlog = async function (req, res) {
     try {
-        let bodyData = req.query
+        const data = req.query
 
-        if (Object.keys(bodyData).length == 0) {
+        if (Object.keys(data).length == 0) {
             let getData = await blogModel.find({ isDeleted: false, deletedAt: null, isPublished: true })
             if (getData.length <= 0) {
                 return res.status(404).send({ status: false, msg: "No entries are there to show you!" })
@@ -85,7 +85,7 @@ const getBlog = async function (req, res) {
             return res.status(200).send({ status: true, count: getData.length, data: getData })
         }
         else {
-            const { subcategory, category, tags, authorId } = bodyData
+            const { subcategory, category, tags, authorId } = data
             const filter = {}
             if (subcategory) {
                 filter.subcategory = subcategory
@@ -118,8 +118,8 @@ const getBlog = async function (req, res) {
 
 const updateBlogs = async function (req, res) {
     try {
-        let blogId = req.params.blogId
-        let data = req.body
+        const blogId = req.params.blogId
+        const data = req.body
         const { subcategory, tags, body, title } = data
         if (Object.keys(data).length === 0) {
             return res.status(400).send({ status: false, msg: "Please enter required details in request body" })
@@ -139,13 +139,13 @@ const updateBlogs = async function (req, res) {
             if (!stringChecking(body)) return res.status(400).send({ status: false, msg: "body must have Non empty string " })
         }
 
-        let validBlogId = await blogModel.findById(blogId)
+        const validBlogId = await blogModel.findById(blogId)
         if (validBlogId === null) {
             return res.status(404).send({ status: false, msg: "Invalid blogId, Id not found " })
         } else if (validBlogId.isDeleted === true) {
             return res.status(400).send({ status: false, msg: " Blog is already deleted" })
         } else {
-            let updateUser = await blogModel.findOneAndUpdate(
+            const updateUser = await blogModel.findOneAndUpdate(
                 { "_id": blogId },
                 { "$set": { "title": title, "body": body }, "$addToSet": { "tags": tags, "subcategory": subcategory }, isPublished: true, publishedAt: new Date() },
                 { new: true }
@@ -183,7 +183,7 @@ const deleteBlog = async function (req, res) {
 const deleteByQuery = async function (req, res) {
 
     try {
-        let data = req.query
+        const data = req.query
         const tokenAuthorId = (req.decodedToken.authorId).toString()
         if (Object.keys(data).length === 0) {
             return res.status(404).send({ status: false, msg: "Please enter a filter to delete" })
